@@ -7,9 +7,9 @@ base_dir = Path(__file__).parent
 data_dir = base_dir / "data"
 data_dir.mkdir(exist_ok=True)
 
-from src.vault_loader import create_demo_vault, load_vault_from_directory, load_vault_from_zip
+from src.vault_loader import create_demo_vault, load_vault_from_zip
 from src.chunker import chunk_documents
-from src.vector_store import init_vector_store, get_vector_store
+from src.vector_store import init_vector_store
 from src.retriever import retrieve_relevant_context
 from src.email_generator import generate_email_draft
 from src.email_sender import send_email
@@ -34,12 +34,16 @@ def main():
         if kb_option == "Demo Knowledge Base":
             if st.button("Load Demo Vault"):
                 with st.spinner("Creating and loading demo vault..."):
-                    vault_path = create_demo_vault(str(data_dir))
-                    docs = load_vault_from_directory(vault_path)
-                    chunks = chunk_documents(docs)
-                    init_vector_store(chunks)
-                    st.success(f"Files found: {len(docs)}\nMarkdown notes: {len(docs)}")
-                    st.session_state["kb_loaded"] = True
+                    try:
+                        docs = create_demo_vault()
+                        chunks = chunk_documents(docs)
+                        vectorstore = init_vector_store(chunks)
+                        
+                        st.session_state["vectorstore"] = vectorstore
+                        st.session_state["kb_loaded"] = True
+                        st.success(f"Files found: {len(docs)}\nMarkdown notes: {len(docs)}")
+                    except Exception as e:
+                        st.error(f"Error initializing Demo Vault: {str(e)}")
                     
         else:
             uploaded_file = st.file_uploader("Upload Obsidian Vault (.zip)", type="zip")
@@ -52,9 +56,11 @@ def main():
                                 st.warning("No Markdown files found in the uploaded vault.")
                             else:
                                 chunks = chunk_documents(docs)
-                                init_vector_store(chunks)
-                                st.success(f"Files found: {len(docs)}\nMarkdown notes: {len(docs)}")
+                                vectorstore = init_vector_store(chunks)
+                                
+                                st.session_state["vectorstore"] = vectorstore
                                 st.session_state["kb_loaded"] = True
+                                st.success(f"Files found: {len(docs)}\nMarkdown notes: {len(docs)}")
                         except Exception as e:
                             st.error(f"Error processing vault: {str(e)}")
 

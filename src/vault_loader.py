@@ -4,11 +4,8 @@ import tempfile
 from pathlib import Path
 from langchain_core.documents import Document
 
-def create_demo_vault(base_path: str):
-    """Creates a demo Obsidian vault with fictional company data."""
-    vault_path = Path(base_path) / "demo_vault"
-    vault_path.mkdir(parents=True, exist_ok=True)
-    
+def create_demo_vault():
+    """Creates a demo Obsidian vault with fictional company data in memory."""
     files = {
         "Company.md": "# Company Overview\nAcme Corp is a leading provider of innovative software solutions. Founded in 2010, our mission is to simplify complex workflows.\n\n## Contact\nSupport: support@acmecorp.example.com",
         "Products.md": "# Products\n## Acme Cloud\nOur flagship cloud platform.\n\n## Acme Analytics\nData analytics tool.",
@@ -19,13 +16,19 @@ def create_demo_vault(base_path: str):
         "Policies.md": "# Security Policy\nWe are SOC2 compliant and encrypt all data at rest using AES-256."
     }
     
+    documents = []
     for filename, content in files.items():
-        file_path = vault_path / filename
-        if not file_path.exists():
-            with open(file_path, "w", encoding="utf-8") as f:
-                f.write(content)
-                
-    return str(vault_path)
+        documents.append(
+            Document(
+                page_content=content,
+                metadata={
+                    "source": f"demo_vault/{filename}",
+                    "filename": filename,
+                    "relative_path": filename
+                }
+            )
+        )
+    return documents
 
 def load_vault_from_directory(directory_path: str):
     """Loads all markdown files from a directory."""
@@ -54,8 +57,8 @@ def load_vault_from_directory(directory_path: str):
 
 def load_vault_from_zip(zip_file) -> list:
     """Extracts a zip file to a temporary directory and loads markdown files."""
-    temp_dir = tempfile.mkdtemp()
-    with zipfile.ZipFile(zip_file, 'r') as zip_ref:
-        zip_ref.extractall(temp_dir)
-        
-    return load_vault_from_directory(temp_dir)
+    with tempfile.TemporaryDirectory() as temp_dir:
+        with zipfile.ZipFile(zip_file, 'r') as zip_ref:
+            zip_ref.extractall(temp_dir)
+            
+        return load_vault_from_directory(temp_dir)

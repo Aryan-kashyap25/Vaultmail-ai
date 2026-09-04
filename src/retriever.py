@@ -1,7 +1,7 @@
-from src.vector_store import get_vector_store
+import streamlit as st
 
 def retrieve_relevant_context(query: str, k: int = 5):
-    vectorstore = get_vector_store()
+    vectorstore = st.session_state.get("vectorstore")
     if not vectorstore:
         return []
     
