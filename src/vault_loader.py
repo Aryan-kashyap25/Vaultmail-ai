@@ -4,8 +4,11 @@ import tempfile
 from pathlib import Path
 from langchain_core.documents import Document
 
-def create_demo_vault():
-    """Creates a demo Obsidian vault with fictional company data in memory."""
+def create_demo_vault(base_path: str):
+    """Creates a demo Obsidian vault with fictional company data."""
+    vault_path = Path(base_path)
+    vault_path.mkdir(parents=True, exist_ok=True)
+    
     files = {
         "Company.md": "# Company Overview\nAcme Corp is a leading provider of innovative software solutions. Founded in 2010, our mission is to simplify complex workflows.\n\n## Contact\nSupport: support@acmecorp.example.com",
         "Products.md": "# Products\n## Acme Cloud\nOur flagship cloud platform.\n\n## Acme Analytics\nData analytics tool.",
@@ -16,19 +19,12 @@ def create_demo_vault():
         "Policies.md": "# Security Policy\nWe are SOC2 compliant and encrypt all data at rest using AES-256."
     }
     
-    documents = []
     for filename, content in files.items():
-        documents.append(
-            Document(
-                page_content=content,
-                metadata={
-                    "source": f"demo_vault/{filename}",
-                    "filename": filename,
-                    "relative_path": filename
-                }
-            )
-        )
-    return documents
+        file_path = vault_path / filename
+        with open(file_path, "w", encoding="utf-8") as f:
+            f.write(content)
+                
+    return str(vault_path)
 
 def load_vault_from_directory(directory_path: str):
     """Loads all markdown files from a directory."""

@@ -7,7 +7,7 @@ base_dir = Path(__file__).parent
 data_dir = base_dir / "data"
 data_dir.mkdir(exist_ok=True)
 
-from src.vault_loader import create_demo_vault, load_vault_from_zip
+from src.vault_loader import create_demo_vault, load_vault_from_directory, load_vault_from_zip
 from src.chunker import chunk_documents
 from src.vector_store import init_vector_store
 from src.retriever import retrieve_relevant_context
@@ -35,7 +35,10 @@ def main():
             if st.button("Load Demo Vault"):
                 with st.spinner("Creating and loading demo vault..."):
                     try:
-                        docs = create_demo_vault()
+                        import tempfile
+                        base_path = os.path.join(tempfile.gettempdir(), "vaultmail_demo_vault")
+                        vault_path = create_demo_vault(base_path)
+                        docs = load_vault_from_directory(vault_path)
                         chunks = chunk_documents(docs)
                         vectorstore = init_vector_store(chunks)
                         
